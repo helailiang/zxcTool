@@ -13,6 +13,7 @@ import (
 type WriterToFileHook struct {
 	WhetherWriteToFile bool
 	LogNamePrefix string
+	OutPutAll	 bool //输出到文件和终端
 	Writer        io.Writer
 	LogLevels     []log.Level
 }
@@ -42,7 +43,12 @@ func (hook *WriterToFileHook) Fire(entry *log.Entry) error {
 	fileName := fmt.Sprintf("%s_%s_%d.log", hook.LogNamePrefix, time.Now().Format("2006-01"), GlobalInterval)
 	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err == nil {
-		hook.Writer = file
+		if hook.OutPutAll {
+			mw := io.MultiWriter(os.Stdout, file)
+			hook.Writer = mw
+		}else {
+			hook.Writer = file
+		}
 	} else {
 		hook.Writer = os.Stderr
 		hook.Writer.Write([]byte("Failed to log to file, using default stderr"))

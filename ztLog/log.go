@@ -22,11 +22,11 @@ func LogInitialize(cfg config.Configer) {
 	logLevel := cfg.DefaultInt("log::log_level", 7)
 	whetherWriteToFile := cfg.DefaultBool("log::log_whether_write_to_file", false)
 	logFilePath := cfg.DefaultString("log::log_file_path", "../temp_log/")
-	SetupSTDLogs(whetherWriteToFile, logFilePath + logNamePrefix, logFormatter, logLevel)
+	SetupSTDLogs(whetherWriteToFile, false, logFilePath + logNamePrefix, logFormatter, logLevel)
 }
 
 // setupLogs adds hooks to send logs to different destinations depending on level
-func SetupSTDLogs(whetherWriteToFile bool, logNamePrefix, logFormatter string, logLevel int) {
+func SetupSTDLogs(whetherWriteToFile, outPutAll bool, logNamePrefix, logFormatter string, logLevel int) {
 	var choicedFormatter log.Formatter
 
 	switch logFormatter {
@@ -50,12 +50,12 @@ func SetupSTDLogs(whetherWriteToFile bool, logNamePrefix, logFormatter string, l
 		}
 	}
 
-	SetupLogsCanExpand(log.StandardLogger(), choicedFormatter, whetherWriteToFile, logNamePrefix, logLevel)
+	SetupLogsCanExpand(log.StandardLogger(), choicedFormatter, whetherWriteToFile, outPutAll, logNamePrefix, logLevel)
 }
 
 
 
-func SetupLogsCanExpand(lPtr *log.Logger, f log.Formatter, whetherWriteToFile bool, logNamePrefix string, logLevel int) {
+func SetupLogsCanExpand(lPtr *log.Logger, f log.Formatter, whetherWriteToFile, outPutAll bool, logNamePrefix string, logLevel int) {
 	lPtr.SetLevel(log.Level(logLevel - 1))
 	lPtr.SetReportCaller(true)
 	lPtr.Formatter = f
@@ -63,6 +63,7 @@ func SetupLogsCanExpand(lPtr *log.Logger, f log.Formatter, whetherWriteToFile bo
 	lPtr.AddHook(&WriterToFileHook{ // Send logs with level higher than warning to stderr
 		WhetherWriteToFile: whetherWriteToFile,
 		LogNamePrefix: logNamePrefix,
+		OutPutAll: outPutAll,
 		Writer:        os.Stdout,
 		LogLevels: []log.Level{
 			log.PanicLevel,
